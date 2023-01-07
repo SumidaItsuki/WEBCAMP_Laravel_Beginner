@@ -38,7 +38,7 @@
         <tr>
             <td>{{ $task->name }}
             <td>{{ $task->period }}
-            <td>{{ $task->priority }}
+            <td>{{ $task->getPriorityString() }}
             <td><a href="./detail.html">詳細閲覧</a>
             <td><a href="./edit.html">編集</a>
             <td><form action="./top.html"><button>完了</button></form>
