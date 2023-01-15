@@ -7,6 +7,8 @@ use App\Http\Requests\TaskRegisterPostRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Task as TaskModel;
 use App\Models\CompletedTask as CompletedTaskModel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Fecades\DB;
 
 class TaskController extends Controller
 {
@@ -20,12 +22,16 @@ class TaskController extends Controller
         //1Page辺りの表示アイテム数を設定
         $per_page=2;
         // 一覧の取得
+        /*$list = $this->getListBuilder()
+                     ->paginate($per_page);
+                     */
         $list = TaskModel::where('user_id', Auth::id())
                          ->orderBy('priority', 'DESC')
                          ->orderBy('period')
                          ->orderBy('created_at')
                          ->paginate($per_page);
                          //->get();
+        
 /*
 $sql = TaskModel::where('user_id', Auth::id())
                  ->orderBy('priority', 'DESC')
@@ -103,6 +109,23 @@ var_dump($sql);
         // テンプレートに「取得したレコード」の情報を渡す
         return view($template_name, ['task' => $task]);
     }
+    /**
+     * 「単一のタスク」Modelの取得
+     */
+     protected function getTaskModel($task_id){
+         //task_idのレコードを取得する
+         $task=TaskModel::find($task_id);
+         if ($task===null){
+             return null;
+         }
+         //本人以外のタスクならNGとする
+         if ($task->user_id !==Auth::id()){
+             return null;
+         }
+         //
+         return $task;
+     }
+     
     /**
      * タスクの編集処理
      */
@@ -199,6 +222,47 @@ var_dump($sql);
 
         // 一覧に遷移する
         return redirect('/task/list');
+    }
+     /**
+     * CSV ダウンロード
+     */
+    public function csvDownload()
+    {
+        /* 「ダウンロードさせたいCSV」を作成する */
+        $data_list = [
+            'id' => 'タスクID',
+            'name' => 'タスク名',
+            'priority' => '重要度',
+            'period' => '期限',
+            'detail' => 'タスク詳細',
+            'created_at' => 'タスク作成日',
+            'updated_at' => 'タスク修正日',
+        ];
+        // データを取得する
+        $list = $this->getListBuilder()->get();
+
+        // バッファリングを開始
+        ob_start();
+
+        // 出力用のファイルハンドルを作成する
+        $file = new \SplFileObject('php://output', 'w');
+        // ヘッダを書き込む
+        $file->fputcsv(array_values($data_list));
+        // CSVをファイルに書き込む(出力する)
+        foreach($list as $datum) {
+            $file->fputcsv($datum->toArray());
+        }
+
+        // 現在のバッファの中身を取得し、出力バッファを削除する
+        $csv_string = ob_get_clean();
+
+        // 文字コードを変換する
+        $csv_string_sjis = mb_convert_encoding($csv_string, 'SJIS', 'UTF-8');
+
+        // CSVを出力する
+        return response($csv_string_sjis)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', 'attachment; filename="test.csv"');
     }
 
 }
