@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Task as TaskModel;
 use App\Models\CompletedTask as CompletedTaskModel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Fecades\DB;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -206,8 +206,8 @@ var_dump($sql);
             // tasks側を削除する
             $task->delete();
 //var_dump($task->toArray()); exit;
-var_dump($task);
-exit;
+//var_dump($task);
+//exit;
 
             // completed_tasks側にinsertする
             $dask_datum = $task->toArray();
